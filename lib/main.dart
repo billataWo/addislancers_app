@@ -14,12 +14,14 @@ void main() async {
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeNotifier(),
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeNotifier>(
