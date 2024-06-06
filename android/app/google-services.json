@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "40488551836",
+    "project_id": "addislancersapp",
+    "storage_bucket": "addislancersapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:40488551836:android:8f215fa2693f58695d7459",
+        "android_client_info": {
+          "package_name": "com.addislancers.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "40488551836-qu27o6mtef9nj8f6g2r61i36rni7bhfv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoCWVC23FR2T9fsc72aaCcqaP-myIIWEs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "40488551836-qu27o6mtef9nj8f6g2r61i36rni7bhfv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "40488551836-ekscecbthel3n0et7po1hsoa0kkpij8j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.addislancersApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:40488551836:android:05cd6be8289151315d7459",
+        "android_client_info": {
+          "package_name": "com.example.addislancers_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "40488551836-qu27o6mtef9nj8f6g2r61i36rni7bhfv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoCWVC23FR2T9fsc72aaCcqaP-myIIWEs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "40488551836-qu27o6mtef9nj8f6g2r61i36rni7bhfv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "40488551836-ekscecbthel3n0et7po1hsoa0kkpij8j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.addislancersApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
