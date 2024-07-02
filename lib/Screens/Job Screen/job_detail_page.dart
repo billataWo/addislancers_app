@@ -1,3 +1,4 @@
+import 'package:addislancers_app/Models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,9 +16,12 @@ class JobDetailPage extends StatefulWidget {
 
 class _JobDetailPageState extends State<JobDetailPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late Future<DocumentSnapshot> _jobFuture;
   late Future<bool> _appliedFuture;
   late Future<int> _applicationCountFuture;
+  String? _profilePicUrl;
+  UserModel? _userModel;
 
   @override
   void initState() {
@@ -32,6 +36,38 @@ class _JobDetailPageState extends State<JobDetailPage> {
         .collection('jobs')
         .doc(widget.jobId)
         .get();
+  }
+
+  Future<void> _getUserDetails() async {
+    User? firebaseUser = _auth.currentUser;
+    if (firebaseUser != null) {
+      try {
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(firebaseUser.uid).get();
+
+        if (userDoc.exists) {
+          setState(() {
+            _userModel = UserModel.fromDocument(userDoc);
+            _profilePicUrl = _userModel!.profilePic;
+          });
+        } else {
+          print("User document does not exist.");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('User document does not exist.'),
+            ),
+          );
+        }
+      } catch (e) {
+        print("Error fetching user details: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Error fetching user details. Please try again later.'),
+          ),
+        );
+      }
+    }
   }
 
   Future<bool> _checkIfApplied() async {
@@ -129,7 +165,12 @@ class _JobDetailPageState extends State<JobDetailPage> {
                   posterSnapshot.data!.data() as Map<String, dynamic>;
               var posterName =
                   posterData['firstName'] + ' ' + posterData['lastName'];
-              var posterProfilePic = posterData['profilePic'];
+              var posterProfilePic = posterData[CircleAvatar(
+                backgroundImage: _profilePicUrl == null
+                    ? const AssetImage('assets/images/default_profile_pic.jpg')
+                    : NetworkImage(_profilePicUrl!) as ImageProvider,
+                radius: 30.0,
+              )];
 
               return FutureBuilder<int>(
                 future: _applicationCountFuture,

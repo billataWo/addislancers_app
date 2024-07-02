@@ -24,7 +24,7 @@ class _LogInState extends State<LogIn> {
         password: _passwordController.text,
       );
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+          context, MaterialPageRoute(builder: (context) => HomeScreen()));
     } on FirebaseAuthException catch (e) {
       String message;
       if (e.code == 'user-not-found') {
@@ -35,7 +35,7 @@ class _LogInState extends State<LogIn> {
         message = "your email or password is incorect.";
       }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: const Color.fromARGB(112, 9, 9, 9),
+        backgroundColor: Color.fromARGB(249, 2, 11, 39),
         content: Text(
           message,
           style: const TextStyle(fontSize: 18.0),
@@ -47,7 +47,7 @@ class _LogInState extends State<LogIn> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color.fromARGB(255, 254, 255, 255),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -79,7 +79,7 @@ class _LogInState extends State<LogIn> {
                     ),
                     const SizedBox(height: 30.0),
                     _buildButton(
-                      text: "Sign In",
+                      text: "Login",
                       onTap: () {
                         if (_formKey.currentState!.validate()) {
                           _userLogin();

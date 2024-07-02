@@ -9,7 +9,6 @@ class PostJobScreen extends StatefulWidget {
   const PostJobScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _PostJobScreenState createState() => _PostJobScreenState();
 }
 
@@ -18,6 +17,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _paymentController = TextEditingController();
+  final _deadlineController = TextEditingController();
   String _paymentType = 'Hourly';
   File? _selectedFile;
   bool _isUploading = false;
@@ -39,7 +39,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
           .get();
       if (userDoc.exists) {
         setState(() {
-          _posterName = userDoc['firstName'] + ' ' + userDoc['lastName'];
+          _posterName = '${userDoc['firstName']} ${userDoc['lastName']}';
         });
       }
     }
@@ -90,6 +90,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
           'description': _descriptionController.text,
           'payment': _paymentController.text,
           'paymentType': _paymentType,
+          'deadline': _deadlineController.text,
           'fileUrl': fileUrl,
           'timestamp': FieldValue.serverTimestamp(),
           'poster': _posterName ?? 'Anonymous',
@@ -122,11 +123,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
       appBar: AppBar(
         title: const Text('Post a Job'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
                 controller: _titleController,
@@ -138,6 +140,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Job Description'),
@@ -150,6 +153,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _paymentController,
                 decoration: const InputDecoration(labelText: 'Payment Amount'),
@@ -161,6 +165,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _paymentType,
                 decoration: const InputDecoration(labelText: 'Payment Type'),
@@ -174,6 +179,21 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   setState(() {
                     _paymentType = newValue!;
                   });
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _deadlineController,
+                decoration: const InputDecoration(
+                  labelText: 'Application Deadline',
+                  hintText: 'YYYY-MM-DD',
+                ),
+                keyboardType: TextInputType.datetime,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the application deadline';
+                  }
+                  return null;
                 },
               ),
               const SizedBox(height: 20),

@@ -20,7 +20,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text(
           "Password Reset Email has been sent!",
-          style: TextStyle(fontSize: 20.0),
+          style: TextStyle(fontSize: 15.0),
         ),
       ));
     } on FirebaseAuthException catch (e) {
@@ -28,12 +28,14 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       if (e.code == "user-not-found") {
         message = "No user found for that email.";
       } else {
-        message = "An error occurred.";
+        message = "check internet connection or email address then try again.";
       }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(
           message,
-          style: const TextStyle(fontSize: 20.0),
+          style: const TextStyle(
+            fontSize: 15.0,
+          ),
         ),
       ));
     }
@@ -51,7 +53,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
               child: Text(
                 "Password Recovery",
                 style: TextStyle(
-                  color: Color.fromARGB(255, 0, 0, 0),
+                  color: Color.fromARGB(90, 3, 16, 199),
                   fontSize: 30.0,
                   fontWeight: FontWeight.bold,
                 ),

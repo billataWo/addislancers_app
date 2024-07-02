@@ -37,7 +37,7 @@ dependencies:
   image_picker: ^1.1.0
   image_cropper: ^6.0.0
   fluttericon: ^2.0.0
-  url_launcher: ^6.2.6
+  url_launcher: ^6.3.0
   curved_navigation_bar: ^1.0.3
   uuid: ^4.4.0
   fluttertoast: ^8.2.5
@@ -88,6 +88,10 @@ flutter:
     - images/bestlogo.png
     - images/facebook_Icon.png
     - images/background.jpg
+    - images/community.png
+    - images/team-work.png
+    - images/connect.png
+    - assets/images/default_profile_pic.jpg
     
 
   # An image asset can refer to one or more resolution-specific "variants", see

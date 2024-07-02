@@ -1,6 +1,9 @@
+import 'package:addislancers_app/Onboarding%20Screen/onboarding_screen.dart';
+import 'package:addislancers_app/Screens/Home%20Screen/account_settings.dart';
+import 'package:addislancers_app/Screens/Home%20Screen/settings_page.dart';
 import 'package:addislancers_app/firebase_options.dart';
 //import 'package:addislancers_app/home_screen.dart';
-import 'package:addislancers_app/Screens/Home%20Screen/settings_page.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,7 +32,8 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           theme:
               themeNotifier.isDarkMode ? ThemeData.dark() : ThemeData.light(),
-          home: const LogIn(),
+          home: const OnboardingScreen(),
+          /*const LogIn()*/
           routes: {
             '/settings': (context) => const SettingsPage(),
             '/login': (context) => const LogIn(),

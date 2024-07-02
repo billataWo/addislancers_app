@@ -1,43 +1,51 @@
+import 'package:addislancers_app/Screens/Chat%20Screen/chat_list_screen.dart';
+import 'package:addislancers_app/Screens/Home%20Screen/settings_page.dart';
+import 'package:addislancers_app/Screens/Job%20Screen/applied_job_list.dart';
+import 'package:addislancers_app/Screens/Job%20Screen/job_detail_page.dart';
+import 'package:addislancers_app/Screens/Job%20Screen/postjob_screen.dart';
 import 'package:addislancers_app/Screens/Job%20Screen/saved_jobs.dart';
+import 'package:addislancers_app/Screens/Profile%20Screen/profile_screen.dart';
+import 'package:addislancers_app/Models/user_model.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:badges/badges.dart' as badge_pkg;
-import '../Job Screen/postjob_screen.dart';
-import '../Profile Screen/profile_screen.dart';
-import '../Job Screen/jobListPage.dart';
-import 'settings_page.dart';
-import '../../Models/user_model.dart';
-import '../Job Screen/applied_job_list.dart';
-import '../Chat Screen/chat_list_screen.dart';
-import '../Auth/login_page.dart';
+import 'package:intl/intl.dart';
+import 'package:addislancers_app/Screens/Job%20Screen/job_list.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   UserModel? _userModel;
-  int _selectedIndex = 0; // Default to showing posted jobs
+  int _selectedIndex = 0;
   String _searchQuery = "";
   bool _isSearching = false;
+  User? user;
   int _unreadMessageCount = 0;
+  List<DocumentSnapshot> _searchResults = [];
+  List<DocumentSnapshot> _allJobs = [];
 
-  // Create a GlobalKey for the Scaffold
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String? _profilePicUrl;
 
   @override
   void initState() {
     super.initState();
-    _getUserDetails();
+    _getUserDetails().then((_) {
+      setState(() {});
+    });
     _searchController.addListener(_onSearchChanged);
-    _listenForNewMessages();
+    _listenForNewNotification();
+    _fetchAllJobs();
   }
 
   @override
@@ -49,19 +57,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _getUserDetails() async {
     User? firebaseUser = _auth.currentUser;
+
     if (firebaseUser != null) {
       try {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(firebaseUser.uid)
-            .get();
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(firebaseUser.uid).get();
 
         if (userDoc.exists) {
           setState(() {
             _userModel = UserModel.fromDocument(userDoc);
+            _profilePicUrl = _userModel!.profilePic;
           });
         } else {
-          // Handle the case where the document does not exist
           print("User document does not exist.");
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -81,29 +88,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _listenForNewMessages() {
+  void _listenForNewNotification() {
     FirebaseFirestore.instance
-        .collection('chats')
+        .collection('jobs')
         .where('users', arrayContains: _auth.currentUser?.uid)
         .snapshots()
-        .listen((chatSnapshot) {
-      int newMessageCount = 0;
-      for (var chatDoc in chatSnapshot.docs) {
-        var chatData = chatDoc.data();
+        .listen((notificationSnapshot) {
+      int _newNotificationCount = 0;
+      for (var notificationData in notificationSnapshot.docs) {
         FirebaseFirestore.instance
-            .collection('chats/${chatDoc.id}/messages')
-            .where('read', isEqualTo: false)
-            .where('sender', isNotEqualTo: _auth.currentUser?.uid)
-            .snapshots()
-            .listen((messageSnapshot) {
+            .collection('jobs')
+            .doc(notificationData.id)
+            .collection('messages')
+            .where('isRead', isEqualTo: false)
+            .where('senderId', isNotEqualTo: _auth.currentUser?.uid)
+            .get()
+            .then((messageSnapshot) {
+          _newNotificationCount += notificationSnapshot.docs.length;
           setState(() {
-            newMessageCount += messageSnapshot.docs.length;
+            _unreadMessageCount = _newNotificationCount;
           });
         });
       }
-      setState(() {
-        _unreadMessageCount = newMessageCount;
-      });
     });
   }
 
@@ -116,352 +122,517 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onSearchChanged() {
     setState(() {
-      _searchQuery = _searchController.text;
+      _searchQuery = _searchController.text.toLowerCase();
       _isSearching = _searchQuery.isNotEmpty;
+      _searchFirestore();
     });
   }
 
+  Future<void> _searchFirestore() async {
+    if (_searchQuery.isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+
+    QuerySnapshot jobSnapshot = await FirebaseFirestore.instance
+        .collection('jobs')
+        .where('searchKeywords', arrayContains: _searchQuery)
+        .get();
+
+    QuerySnapshot userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('searchKeywords', arrayContains: _searchQuery)
+        .get();
+
+    QuerySnapshot companySnapshot = await FirebaseFirestore.instance
+        .collection('companies')
+        .where('searchKeywords', arrayContains: _searchQuery)
+        .get();
+
+    setState(() {
+      _searchResults = [
+        ...jobSnapshot.docs,
+        ...userSnapshot.docs,
+        ...companySnapshot.docs
+      ];
+    });
+  }
+
+  Future<void> _fetchAllJobs() async {
+    QuerySnapshot jobSnapshot =
+        await FirebaseFirestore.instance.collection('jobs').get();
+
+    setState(() {
+      _allJobs = jobSnapshot.docs;
+    });
+  }
+
+  Future<void> _refreshJobs() async {
+    await _fetchAllJobs();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Jobs updated')),
+    );
+  }
+
+  String _truncateDescription(String description, int wordLimit) {
+    List<String> words = description.split(' ');
+    if (words.length > wordLimit) {
+      return words.sublist(0, wordLimit).join(' ') + '...';
+    }
+    return description;
+  }
+
   Widget _getSelectedPage() {
-    if (_selectedIndex == 4 && _userModel != null) {
-      return _buildProfilePage();
-    }
-
-    if (_isSearching) {
-      return JobListPage(searchQuery: _searchQuery);
-    }
-
-    switch (_selectedIndex) {
-      case 0:
-        return JobListPage();
-      case 1:
-        return ChatListScreen();
-      case 2:
-        return const PostJobScreen();
-      case 3:
-        return AppliedJobListPage(); // applied jobs list
-      case 4:
-        return const ProfileScreen();
-      default:
-        return JobListPage();
+    if (_userModel != null) {
+      switch (_selectedIndex) {
+        case 0:
+          return _buildHomePage();
+        case 1:
+          return ChatListScreen();
+        case 2:
+          return _userModel!.role == 'Client'
+              ? const PostJobScreen()
+              : SavedJobsPage();
+        case 3:
+          return AppliedJobListPage();
+        case 4:
+          return const ProfileScreen();
+        default:
+          return _buildHomePage();
+      }
+    } else {
+      return Center(
+          child: CircularProgressIndicator()); // Or a default loading page
     }
   }
 
-  Widget _buildProfilePage() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        CircleAvatar(
-          radius: 50,
-          backgroundImage: _userModel!.profilePic.isNotEmpty
-              ? NetworkImage(_userModel!.profilePic)
-              : const AssetImage("images/tmpProfile.jpg") as ImageProvider,
-        ),
-        const SizedBox(height: 10),
-        Text(
-          '${_userModel!.firstName} ${_userModel!.lastName}',
-          style: const TextStyle(fontSize: 20),
-        ),
-        const SizedBox(height: 5),
-        Text(_userModel!.email),
-      ],
+  Widget _buildSearchResults() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('jobs').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        var jobs = snapshot.data!.docs.where((doc) {
+          var data = doc.data() as Map<String, dynamic>;
+          var title = data['title']?.toString().toLowerCase() ?? "";
+          var description = data['description']?.toString().toLowerCase() ?? "";
+          return title.contains(_searchQuery.toLowerCase()) ||
+              description.contains(_searchQuery.toLowerCase());
+        }).toList();
+
+        if (jobs.isEmpty) {
+          return Center(child: Text('No jobs found'));
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: jobs.length,
+          itemBuilder: (context, index) {
+            var job = jobs[index];
+            var jobData = job.data() as Map<String, dynamic>;
+            var jobTitle = jobData['title'];
+            var jobDescription = jobData['description'];
+            var jobPayment = jobData['payment'];
+            var jobTimestamp = jobData['timestamp'] as Timestamp;
+            var jobDate =
+                DateFormat('dd MMM kk:mm').format(jobTimestamp.toDate());
+
+            return ListTile(
+              title: Text(jobTitle),
+              subtitle: Text(jobDescription),
+              trailing: Text('Payment: $jobPayment\nPosted: $jobDate'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => JobDetailPage(jobId: job.id),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+//////////////*//////////////////////*
+  /*Widget _buildJobList() {
+    if (_allJobs.isEmpty) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refreshJobs,
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        itemCount: _allJobs.length,
+        itemBuilder: (context, index) {
+          var job = _allJobs[index];
+          var jobData = job.data() as Map<String, dynamic>;
+          var jobTitle = jobData['title'];
+          var jobDescription = _truncateDescription(jobData['description'], 10);
+          var jobPayment = jobData['payment'];
+          var jobTimestamp = jobData['timestamp'] as Timestamp;
+          var jobDate =
+              DateFormat('dd MMM kk:mm').format(jobTimestamp.toDate());
+
+          return Card(
+            margin: EdgeInsets.symmetric(vertical: 8.0),
+            child: ListTile(
+              contentPadding: EdgeInsets.all(16.0),
+              title: Text(
+                jobTitle,
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: const Color.fromARGB(255, 2, 36, 149)),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 8),
+                  Text(jobDescription),
+                  SizedBox(height: 8),
+                  Text(
+                    'Payment: $jobPayment',
+                    style: TextStyle(fontSize: 16, color: Colors.green),
+                  ),
+                  SizedBox(height: 4),
+                  Text('Posted: $jobDate',
+                      style: TextStyle(fontSize: 16, color: Colors.grey)),
+                ],
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => JobDetailPage(jobId: job.id),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }*/
+
+  Widget _buildCategoryAndRecentJobs() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Job Category',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              CategoryIcon(
+                icon: Icons.computer,
+                label: 'Technology',
+                color: Color(0xFF013BF9),
+              ),
+              CategoryIcon(
+                icon: Icons.layers,
+                label: 'Design',
+                color: Color(0xFF013BF9),
+              ),
+              CategoryIcon(
+                icon: Icons.currency_exchange,
+                label: 'Marketing',
+                color: Color(0xFF013BF9),
+              ),
+              CategoryIcon(
+                icon: Icons.edit_note,
+                label: 'Writing',
+                color: Color(0xFF013BF9),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          Text(
+            'Recent Jobs',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 10),
+          JobList(
+            allJobs: _allJobs,
+            refreshJobs: _refreshJobs,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHomePage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            //backgroundColor: Color.fromARGB(255, 4, 29, 113),
+            expandedHeight: 100.0,
+            //floating: true,
+            flexibleSpace: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                return FlexibleSpaceBar(
+                  background: Padding(
+                    padding: const EdgeInsets.only(
+                        top: 0, bottom: 50, left: 5.0, right: 5.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Spacer(),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ProfileScreen()),
+                                );
+                              },
+                              child: CircleAvatar(
+                                backgroundImage: _profilePicUrl != null
+                                    ? NetworkImage(_profilePicUrl!)
+                                        as ImageProvider
+                                    : const AssetImage(
+                                        'assets/images/default_profile_pic.jpg'),
+                                radius: 25.0,
+                              ),
+                            ),
+                            const SizedBox(width: 10.0),
+                            // if (_userModel != null)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _userModel != null
+                                      ? "Welcome 👋\n${_userModel!.firstName} ${_userModel!.lastName}"
+                                      : "Welcome 👋",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color.fromARGB(255, 2, 36, 149),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.notifications,
+                                    color: Color.fromARGB(255, 2, 36, 149),
+                                  ),
+                                  onPressed: () {
+                                    // Handle notifications icon press
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.settings,
+                                      color: Color.fromARGB(255, 2, 36, 149)),
+                                  onPressed: () {
+                                    // Handle settings icon press
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const SettingsPage()),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SliverPersistentHeader(
+            pinned: true,
+            floating: true,
+            delegate: MySliverPersistentHeaderDelegate(
+              searchController: _searchController,
+              unreadMessageCount: _unreadMessageCount,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: _isSearching
+                ? _buildSearchResults()
+                : _buildCategoryAndRecentJobs(),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
-      body: CustomScrollView(
-        slivers: [
-          const SliverAppBar(
-            title: Text(
-              'ADDISLANCERS',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            centerTitle: true,
-            backgroundColor: Color.fromARGB(255, 20, 34, 90),
-            elevation: 0,
-            floating: true,
-            pinned: false,
-          ),
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _SliverAppBarDelegate(
-              minHeight: 60.0,
-              maxHeight: 60.0,
-              child: Container(
-                color: const Color.fromARGB(255, 20, 34, 90),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.menu, color: Colors.white),
-                      onPressed: () {
-                        _scaffoldKey.currentState?.openDrawer();
-                      },
-                    ),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search',
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 8),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(25),
-                            borderSide: BorderSide.none,
-                          ),
-                          prefixIcon:
-                              const Icon(Icons.search, color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.search, color: Colors.white),
-                      onPressed: () {
-                        setState(() {
-                          _searchQuery = _searchController.text;
-                          _isSearching = _searchQuery.isNotEmpty;
-                        });
-                      },
-                    ),
-                    IconButton(
-                      icon: badge_pkg.Badge(
-                        showBadge: _unreadMessageCount > 0,
-                        badgeContent: Text(
-                          '$_unreadMessageCount',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        child: const Icon(Icons.notifications,
-                            color: Colors.white),
-                      ),
-                      onPressed: () {
-                        // this is for notification tap
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          SliverFillRemaining(
-            child: _getSelectedPage(),
-          ),
-        ],
+      body: Center(
+        child: _userModel == null
+            ? const CircularProgressIndicator() // Or a placeholder widget
+            : _getSelectedPage(),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color.fromARGB(255, 20, 34, 90),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white54,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: badge_pkg.Badge(
-              showBadge: _unreadMessageCount > 0,
-              badgeContent: Text(
-                '$_unreadMessageCount',
-                style: const TextStyle(color: Colors.white),
-              ),
-              child: const Icon(Icons.chat),
-            ),
-            label: 'Messages',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Post Job',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.work),
-            label: 'Applied Jobs',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
-      drawer: Drawer(
-        backgroundColor: const Color.fromARGB(255, 20, 34, 90),
-        child: ListView(
-          children: <Widget>[
-            if (_userModel != null)
-              UserAccountsDrawerHeader(
-                accountName: Text(
-                  '${_userModel!.firstName} ${_userModel!.lastName}',
-                  style: const TextStyle(color: Colors.white),
+      bottomNavigationBar: _userModel == null
+          ? null
+          : BottomNavigationBar(
+              backgroundColor: const Color.fromRGBO(1, 18, 72, 1),
+              items: <BottomNavigationBarItem>[
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.home),
+                  label: 'Home',
+                  backgroundColor: Color.fromRGBO(1, 18, 72, 1),
                 ),
-                accountEmail: Text(
-                  _userModel!.email,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                currentAccountPicture: CircleAvatar(
-                  backgroundImage: _userModel!.profilePic.isNotEmpty
-                      ? NetworkImage(_userModel!.profilePic)
-                      : const AssetImage("images/tmpProfile.jpg")
-                          as ImageProvider,
-                ),
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage("images/background.jpg"),
-                    fit: BoxFit.cover,
+                BottomNavigationBarItem(
+                  icon: badge_pkg.Badge(
+                    badgeContent: Text(
+                      '$_unreadMessageCount',
+                      style: const TextStyle(
+                          color: Color.fromARGB(255, 135, 7, 7)),
+                    ),
+                    showBadge: _unreadMessageCount > 0,
+                    child: const Icon(Icons.message),
                   ),
+                  label: 'Messages',
+                  backgroundColor: const Color.fromRGBO(1, 18, 72, 1),
+                ),
+                BottomNavigationBarItem(
+                  icon: _userModel!.role == 'Client'
+                      ? const Icon(Icons.add_circle)
+                      : const Icon(Icons.work_history),
+                  label:
+                      _userModel!.role == 'Client' ? 'Post Job' : 'Saved Jobs',
+                  backgroundColor: const Color.fromRGBO(1, 18, 72, 1),
+                ),
+                BottomNavigationBarItem(
+                  icon: _userModel!.role == 'Client'
+                      ? const Icon(Icons.list)
+                      : const Icon(Icons.work),
+                  label: _userModel!.role == 'Client' ? 'List' : 'Applied Jobs',
+                  backgroundColor: const Color.fromRGBO(1, 18, 72, 1),
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.person),
+                  label: 'Profile',
+                  backgroundColor: Color.fromRGBO(1, 18, 72, 1),
+                ),
+              ],
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+            ),
+    );
+  }
+}
+
+class MySliverPersistentHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final TextEditingController searchController;
+  final int unreadMessageCount;
+
+  MySliverPersistentHeaderDelegate({
+    required this.searchController,
+    required this.unreadMessageCount,
+  });
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      //color: Color.fromARGB(255, 4, 29, 113),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: 'Search for jobs',
+                prefixIcon: Icon(Icons.search),
+                fillColor: Colors.white,
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25.0),
                 ),
               ),
-            ListTile(
-              leading: const Icon(
-                Icons.person,
-                color: Colors.white,
-              ),
-              title: const Text(
-                'Edit Profile',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const ProfileScreen()),
-                );
-              },
             ),
-            ListTile(
-              leading: Icon(Icons.bookmark, color: Colors.white),
-              title: const Text(
-                'Saved Jobs',
-                style: TextStyle(color: Colors.white),
+            const SizedBox(height: 8.0),
+            if (unreadMessageCount > 0)
+              Text(
+                '$unreadMessageCount new notifications',
+                style: TextStyle(color: Colors.red, fontSize: 16.0),
               ),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SavedJobsPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.payment, color: Colors.white),
-              title: const Text(
-                'Payment',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                // yImplement Payment page navigation
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.contacts, color: Colors.white),
-              title: const Text(
-                'Contact Us',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                // Implement Contact Us page navigation
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings, color: Colors.white),
-              title: const Text(
-                'Settings',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.info, color: Colors.white),
-              title: const Text('About', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('About'),
-                      content: const Text(
-                        'Developers: \n     Bilata Wodisha\n     Frezer Bizuwerk\n\nApp Version: 1.0.0',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.white),
-              title: const Text(
-                'Log Out',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.pop(context);
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LogIn()),
-                  (Route<dynamic> route) => false,
-                );
-              },
-            ),
           ],
         ),
       ),
     );
   }
+
+  @override
+  double get maxExtent => 100.0;
+
+  @override
+  double get minExtent => 100.0;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    return true;
+  }
 }
 
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  final double minHeight;
-  final double maxHeight;
-  final Widget child;
+class CategoryIcon extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
 
-  _SliverAppBarDelegate({
-    required this.minHeight,
-    required this.maxHeight,
-    required this.child,
+  const CategoryIcon({
+    required this.icon,
+    required this.label,
+    required this.color,
   });
 
   @override
-  double get minExtent => minHeight;
-
-  @override
-  double get maxExtent => maxHeight;
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return SizedBox.expand(child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _SliverAppBarDelegate oldDelegate) {
-    return maxHeight != oldDelegate.maxHeight ||
-        minHeight != oldDelegate.minHeight ||
-        child != oldDelegate.child;
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 30,
+          backgroundColor: color.withOpacity(0.2),
+          child: Icon(
+            icon,
+            color: color,
+            size: 30,
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
   }
 }

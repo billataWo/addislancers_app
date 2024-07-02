@@ -41,51 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDeRNC2lrdKMN3e51fRh_zsEZO20kQ_RuY',
-    appId: '1:40488551836:web:aca24262a23f832f5d7459',
-    messagingSenderId: '40488551836',
-    projectId: 'addislancersapp',
-    authDomain: 'addislancersapp.firebaseapp.com',
-    storageBucket: 'addislancersapp.appspot.com',
-    measurementId: 'G-V3XEW9VW4E',
+    apiKey: 'AIzaSyBIPbTuTmpC_SPZY7bi5J7YHB8SeFmga90',
+    appId: '1:862480491701:web:c1945616ae0c2ee6268afc',
+    messagingSenderId: '862480491701',
+    projectId: 'addislancersapp-5a6ee',
+    authDomain: 'addislancersapp-5a6ee.firebaseapp.com',
+    storageBucket: 'addislancersapp-5a6ee.appspot.com',
+    measurementId: 'G-8X24RXHNQL',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCoCWVC23FR2T9fsc72aaCcqaP-myIIWEs',
-    appId: '1:40488551836:android:05cd6be8289151315d7459',
-    messagingSenderId: '40488551836',
-    projectId: 'addislancersapp',
-    storageBucket: 'addislancersapp.appspot.com',
+    apiKey: 'AIzaSyA7qcdNf8KaxS9_X0bJsh55unX2eSaSTrA',
+    appId: '1:862480491701:android:57ec2bec95d26c50268afc',
+    messagingSenderId: '862480491701',
+    projectId: 'addislancersapp-5a6ee',
+    storageBucket: 'addislancersapp-5a6ee.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBTfxUZuLVWhqx4qX0o8vwcEw7x9IaST0g',
-    appId: '1:40488551836:ios:7cc6106ae0d304195d7459',
-    messagingSenderId: '40488551836',
-    projectId: 'addislancersapp',
-    storageBucket: 'addislancersapp.appspot.com',
-    iosClientId: '40488551836-ekscecbthel3n0et7po1hsoa0kkpij8j.apps.googleusercontent.com',
+    apiKey: 'AIzaSyCHVP26hjBXY8HU8LYHG92idhnBurM3Z-8',
+    appId: '1:862480491701:ios:2b848baec916e474268afc',
+    messagingSenderId: '862480491701',
+    projectId: 'addislancersapp-5a6ee',
+    storageBucket: 'addislancersapp-5a6ee.appspot.com',
     iosBundleId: 'com.example.addislancersApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBTfxUZuLVWhqx4qX0o8vwcEw7x9IaST0g',
-    appId: '1:40488551836:ios:7cc6106ae0d304195d7459',
-    messagingSenderId: '40488551836',
-    projectId: 'addislancersapp',
-    storageBucket: 'addislancersapp.appspot.com',
-    iosClientId: '40488551836-ekscecbthel3n0et7po1hsoa0kkpij8j.apps.googleusercontent.com',
+    apiKey: 'AIzaSyCHVP26hjBXY8HU8LYHG92idhnBurM3Z-8',
+    appId: '1:862480491701:ios:2b848baec916e474268afc',
+    messagingSenderId: '862480491701',
+    projectId: 'addislancersapp-5a6ee',
+    storageBucket: 'addislancersapp-5a6ee.appspot.com',
     iosBundleId: 'com.example.addislancersApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDeRNC2lrdKMN3e51fRh_zsEZO20kQ_RuY',
-    appId: '1:40488551836:web:980c07ce370b214e5d7459',
-    messagingSenderId: '40488551836',
-    projectId: 'addislancersapp',
-    authDomain: 'addislancersapp.firebaseapp.com',
-    storageBucket: 'addislancersapp.appspot.com',
-    measurementId: 'G-6G9Q8421GW',
+    apiKey: 'AIzaSyBIPbTuTmpC_SPZY7bi5J7YHB8SeFmga90',
+    appId: '1:862480491701:web:08a3d5f974f3259c268afc',
+    messagingSenderId: '862480491701',
+    projectId: 'addislancersapp-5a6ee',
+    authDomain: 'addislancersapp-5a6ee.firebaseapp.com',
+    storageBucket: 'addislancersapp-5a6ee.appspot.com',
+    measurementId: 'G-Y1MRZKCXKG',
   );
-
 }

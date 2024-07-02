@@ -43,15 +43,19 @@ class AuthMethods {
                 user.photoURL ?? 'images/tmpProfile.jpg', // Default profile pic
           });
         }
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()));
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => HomeScreen()));
       }
       return user;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        backgroundColor: Color.fromARGB(24, 2, 11, 39),
         content: Text(
-          "Sign in failed",
-          style: TextStyle(fontSize: 20.0),
+          "Login failed check your internet connection",
+          style: TextStyle(
+            fontSize: 15.0,
+            color: Color.fromARGB(255, 255, 17, 0),
+          ),
         ),
       ));
       return null;

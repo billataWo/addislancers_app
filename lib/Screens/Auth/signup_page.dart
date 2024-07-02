@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../Home Screen/home_screen.dart';
 import 'login_page.dart';
+import 'package:addislancers_app/Models/user_model.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -16,10 +17,11 @@ class _SignUpState extends State<SignUp> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  String _selectedRole = 'Client';
 
   Future<void> _register() async {
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -47,6 +49,7 @@ class _SignUpState extends State<SignUp> {
           'lastName': _lastNameController.text,
           'email': _emailController.text,
           'profilePic': 'images/tmpProfile.jpg', // Default profile pic
+          'role': _selectedRole, // Store the selected role
         });
 
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -133,6 +136,8 @@ class _SignUpState extends State<SignUp> {
                           ? 'Please confirm your password'
                           : null,
                     ),
+                    const SizedBox(height: 30.0),
+                    _buildRoleDropdown(),
                     const SizedBox(height: 30.0),
                     _buildButton(
                       text: "Sign Up",
@@ -228,6 +233,34 @@ class _SignUpState extends State<SignUp> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRoleDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 30.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFFedf0f8),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedRole,
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+        ),
+        items: <String>['Client', 'Freelancer'].map((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        onChanged: (String? newValue) {
+          setState(() {
+            _selectedRole = newValue!;
+          });
+        },
+        validator: (value) => value == null ? 'Please select a role' : null,
       ),
     );
   }

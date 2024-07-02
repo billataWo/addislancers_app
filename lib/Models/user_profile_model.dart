@@ -1,62 +1,109 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserProfileModel {
+  final String uid;
   final String firstName;
   final String lastName;
-  final String experience;
+  final String? profilePic;
+  final String? backgroundPic;
   final String description;
-  final String profilePic;
-  final String resume;
+  //final String winningJobs;
+  final String specialization;
+
+  final List<String> skills;
+  final List<String> portfolios;
+  final List<String> languages;
 
   UserProfileModel({
+    required this.uid,
     required this.firstName,
     required this.lastName,
-    this.experience = '',
-    this.description = '',
-    this.profilePic = '',
-    this.resume = '',
+    this.profilePic,
+    this.backgroundPic,
+    required this.description,
+    required this.specialization,
+    required this.skills,
+    required this.portfolios,
+    required this.languages,
   });
 
-  // Factory constructor to create a UserProfileModel from Firestore DocumentSnapshot
   factory UserProfileModel.fromDocument(DocumentSnapshot doc) {
     return UserProfileModel(
-      firstName: doc['firstName'] ?? '',
-      lastName: doc['lastName'] ?? '',
-      experience: doc['experience'] ?? '',
-      description: doc['description'] ?? '',
-      profilePic: doc['profilePic'] ?? '',
-      resume: doc['resume'] ?? '',
+      uid: doc['uid'],
+      firstName: doc['firstName'],
+      lastName: doc['lastName'],
+      profilePic: doc['profilePic'],
+      backgroundPic: doc['backgroundPic'],
+      description: doc['description'],
+      specialization: doc['specialization'],
+      skills: List<String>.from(doc['skills']),
+      portfolios: List<String>.from(doc['portfolios']),
+      languages: List<String>.from(doc['languages']),
     );
   }
 
-  // Method to convert UserProfileModel to a Map for Firestore storage
   Map<String, dynamic> toMap() {
     return {
+      'uid': uid,
       'firstName': firstName,
       'lastName': lastName,
-      'experience': experience,
-      'description': description,
       'profilePic': profilePic,
-      'resume': resume,
+      'backgroundPic': backgroundPic,
+      'description': description,
+      'specialization': specialization,
+      'skills': skills,
+      'portfolios': portfolios,
+      'languages': languages,
     };
   }
 
-  // Method to create a copy of the current instance with optional new values
+  Future<void> createUserProfile() async {
+    await FirebaseFirestore.instance.collection('users').doc(uid).set(toMap());
+  }
+
+  Future<void> updateUserProfile() async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .update(toMap());
+  }
+
+  Future<void> deleteUserProfile() async {
+    await FirebaseFirestore.instance.collection('users').doc(uid).delete();
+  }
+
+  static Future<UserProfileModel?> getUserProfile(String uid) async {
+    DocumentSnapshot doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (doc.exists) {
+      return UserProfileModel.fromDocument(doc);
+    }
+    return null;
+  }
+
   UserProfileModel copyWith({
+    String? uid,
     String? firstName,
     String? lastName,
-    String? experience,
-    String? description,
     String? profilePic,
-    String? resume,
+    String? backgroundPic,
+    String? description,
+    String? specialization,
+    List<String>? skills,
+    List<String>? portfolios,
+    List<String>? languages,
   }) {
     return UserProfileModel(
+      uid: uid ?? this.uid,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
-      experience: experience ?? this.experience,
-      description: description ?? this.description,
       profilePic: profilePic ?? this.profilePic,
-      resume: resume ?? this.resume,
+      backgroundPic: backgroundPic ?? this.backgroundPic,
+      description: description ?? this.description,
+      specialization: specialization ?? this.specialization,
+      skills: skills ?? this.skills,
+      portfolios: portfolios ?? this.portfolios,
+      languages: languages ?? this.languages,
     );
   }
 }
