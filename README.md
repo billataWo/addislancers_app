@@ -1,7 +1,7 @@
 # AddisLancers App
 
 ## Overview
-AddisLancers App is a freelancing mobile application developed to connect clients with freelancers. Built using Flutter, this app aims to provide a seamless platform for freelancing opportunities, ensuring that clients can find the right talent and freelancers can find the right projects. It is developed using Flutter.
+AddisLancers App is a freelancing mobile application developed to connect clients with freelancers. Built using Flutter, this app aims to provide a seamless platform for freelancing opportunities, ensuring that clients can find the right talent and freelancers can find the right projects.
 
 ## Features
 User authentication and profile management
