@@ -1,16 +1,38 @@
-# addislancers_app
+# AddisLancers App
 
-A new Flutter project.
+## Overview
+AddisLancers App is a freelancing mobile application developed to connect clients with freelancers. Built using Flutter, this app aims to provide a seamless platform for freelancing opportunities, ensuring that clients can find the right talent and freelancers can find the right projects.
 
+## Features
+User authentication and profile management
+Job posting and bidding system
+Real-time chat between clients and freelancers
+Integration with Firebase for backend services
+Notifications for job updates and messages (not yet implemented)
 ## Getting Started
+### Prerequisites
+Flutter SDK: Install Flutter
+Dart: Included with Flutter SDK
+Android Studio or Visual Studio Code
+### Installation
+#### 1. Clone the repository:
+git clone https://github.com/billataWo/addislancers_app.git
+#### 2. Navigate to the project directory:
+cd addislancers_app
+#### 3. Install dependencies:
+flutter pub get
+### Running the App
+##### Connect your device or start an emulator.
+##### Run the app: flutter run
+## Project Structure
+##### lib/: Main Dart code
+##### models/: Data models
+##### screens/: UI screens
+##### services/: Firebase and other service integrations
+##### widgets/: Reusable UI components
+##### assets/: Images and other assets
+##### android/, ios/, web/: Platform-specific code
+##### test/: Unit and widget tests
+## Contact
+### For more information, please contact me at 12mastwal@gmail.com.
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
