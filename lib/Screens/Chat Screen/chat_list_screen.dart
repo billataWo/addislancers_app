@@ -82,11 +82,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
           var chats = snapshot.data!.docs;
           List<Widget> chatWidgets = chats.map((chat) {
-            Map<String, dynamic> data = chat.data()! as Map<String, dynamic>;
+            var data = chat.data();
+            if (data == null) {
+              return const SizedBox.shrink();
+            }
+            Map<String, dynamic> dataMap = data as Map<String, dynamic>;
             String chatId = chat.id;
-            List<dynamic> users = data['users'];
+            List<dynamic> users = dataMap['users'];
             String otherUserId =
-                users.firstWhere((uid) => uid != user!.uid, orElse: () => null);
+                users.firstWhere((uid) => uid != user!.uid, orElse: () => '');
+            if (otherUserId.isEmpty) {
+              return const SizedBox.shrink();
+            }
 
             return FutureBuilder<DocumentSnapshot>(
               future: _firestore.collection('users').doc(otherUserId).get(),
@@ -95,8 +102,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   return const SizedBox.shrink();
                 }
 
-                var otherUserData =
-                    userSnapshot.data!.data() as Map<String, dynamic>;
+                var otherUserData = userSnapshot.data!.data();
+                if (otherUserData == null) {
+                  return const SizedBox.shrink();
+                }
+                Map<String, dynamic> otherUserDataMap =
+                    otherUserData as Map<String, dynamic>;
 
                 return StreamBuilder<QuerySnapshot>(
                   stream: _firestore
@@ -111,7 +122,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     return Card(
                       child: ListTile(
                         title: Text(
-                            '${otherUserData['firstName']} ${otherUserData['lastName']}'),
+                            '${otherUserDataMap['firstName']} ${otherUserDataMap['lastName']}'),
                         trailing: unreadCount > 0
                             ? badge_pkg.Badge(
                                 badgeContent: Text(
@@ -126,7 +137,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             MaterialPageRoute(
                               builder: (context) => ChatScreen(
                                 chatId: chatId,
-                                otherUser: otherUserData,
+                                otherUser: otherUserDataMap,
                                 receiverId: '',
                               ),
                             ),
